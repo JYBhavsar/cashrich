@@ -32,6 +32,7 @@ public class UserController {
     
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody User user) {
+    	
     	try {
     		
         	Optional<User> existingMail = userrepo.findByEmail(user.getEmail());

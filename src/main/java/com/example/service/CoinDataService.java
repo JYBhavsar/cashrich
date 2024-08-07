@@ -1,7 +1,10 @@
 package com.example.service;
 
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +17,10 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.model.CoinData;
 import com.example.repository.CoinDataRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class CoinDataService {
@@ -25,7 +32,7 @@ public class CoinDataService {
     @Autowired
     private CoinDataRepository coinDataRepository;
 
-    public CoinData getCoinData(Long userId, String symbols) {
+    public String getCoinData(Long userId, String symbols) throws JsonMappingException, JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
 
         // Set the headers
@@ -52,16 +59,50 @@ public class CoinDataService {
         }
         System.out.println("responseEntity.getStatusCode()------>>"+responseEntity.getStatusCode());
         if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            String response = responseEntity.getBody();
-            System.out.println("API-response-------::" + response);
+            
+        	String response = responseEntity.getBody();
+            
+        	JSONObject jsonObj = new JSONObject(response.toString());
+            System.out.println("API-response-------::" + jsonObj.toString());
+            
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode actualObj = mapper.readTree(jsonObj.toString());
+            JsonNode data = actualObj.get("data");
+            Iterator<JsonNode> iterator = data.elements();
 
+            while (iterator.hasNext()) {
+                JsonNode symbolData = iterator.next();
+                String symbol = symbolData.get("symbol").asText();
+                String name = symbolData.get("name").asText();
+                long circulatingSupply = symbolData.get("circulating_supply").asLong();
+                double price = symbolData.get("quote").get("USD").get("price").asDouble();
+
+                System.out.println("Symbol: " + symbol);
+                System.out.println("Name: " + name);
+                System.out.println("Circulating Supply: " + circulatingSupply);
+                System.out.println("Price: " + price);
+                System.out.println();
+           }
+            
+//            JsonNode data = actualObj.get("data");
+//            Iterator<Map.Entry<String, JsonNode>> fields = data.fields();
+//            while (fields.hasNext()) {
+//                Map.Entry<String, JsonNode> entry = fields.next();
+//                String symbol = entry.getKey();
+//                String name = entry.getValue().get("name").asText();
+//                double price = entry.getValue().get("quote").get("USD").get("price").asDouble();
+//
+//                System.out.println("Symbol: " + symbol + ", Name: " + name + ", USD Price: " + price);
+//            }
+            
             CoinData coinData = new CoinData();
             coinData.setUserId(userId);
             coinData.setSymbol(symbols);
             coinData.setData(response);
             coinData.setTimestamp(new Date());
-
-            return coinDataRepository.save(coinData);
+            coinDataRepository.save(coinData);
+            
+            return jsonObj.toString();
         } else {
             // Handle non-200 responses
             System.err.println("Failed to fetch data. Status code: " + responseEntity.getStatusCode());

@@ -70,6 +70,7 @@ public class CoinDataService {
             JsonNode data = actualObj.get("data");
             Iterator<JsonNode> iterator = data.elements();
 
+//---------------------- #Method 1 to get data from json response ---------------------------//
             while (iterator.hasNext()) {
                 JsonNode symbolData = iterator.next();
                 String symbol = symbolData.get("symbol").asText();
@@ -83,17 +84,15 @@ public class CoinDataService {
                 System.out.println("Price: " + price);
                 System.out.println();
            }
-            
-//            JsonNode data = actualObj.get("data");
-//            Iterator<Map.Entry<String, JsonNode>> fields = data.fields();
-//            while (fields.hasNext()) {
-//                Map.Entry<String, JsonNode> entry = fields.next();
-//                String symbol = entry.getKey();
-//                String name = entry.getValue().get("name").asText();
-//                double price = entry.getValue().get("quote").get("USD").get("price").asDouble();
-//
-//                System.out.println("Symbol: " + symbol + ", Name: " + name + ", USD Price: " + price);
-//            }
+//---------------------- #Method 2 to get data from json response ---------------------------//            
+            Iterator<Map.Entry<String, JsonNode>> fields = data.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                String symbol = entry.getKey();
+                String name = entry.getValue().get("name").asText();
+                double price = entry.getValue().get("quote").get("USD").get("price").asDouble();
+                System.out.println("Symbol: " + symbol + ", Name: " + name + ", USD Price: " + price);
+            }
             
             CoinData coinData = new CoinData();
             coinData.setUserId(userId);
